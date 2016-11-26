@@ -75,11 +75,8 @@ class CommandHandler:
         print(transaction_id)
         print(uuid)
         print(data)
-        print(data.get(100))
-        print(data.get(101))
-        print(data.get(102))
-        print(data.get(103))
-        test_volume_change(data.get(102))
+        print(data.get(200))
+        test_volume_change(data.get(200))
         # assert (1 in data), "Missing key on data structure"
         # assert (2 in data), "Missing key on data structure"
         #
@@ -177,6 +174,8 @@ def main(settings):
         print("Pebble timeouted")
         logging.info("Pebble timeouted")
 
+    # Install app
+    # AppInstaller(pebble, "hotpebble.pbw").install()
 
     # Register service for app messages
     appservice = AppMessageService(pebble)
