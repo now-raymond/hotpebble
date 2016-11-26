@@ -6,6 +6,7 @@
 const uint8_t Y_FACE_AWAY    = 1;
 const uint8_t Y_FACE_TOWARDS = -1;
 const uint8_t Y_NEUTRAL = 0;
+const uint8_t Y_INACTIVE = -1;
 uint8_t g_stateY = 0;
 
 // App initialisation

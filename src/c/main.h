@@ -7,6 +7,7 @@
 extern const uint8_t Y_FACE_AWAY;
 extern const uint8_t Y_FACE_TOWARDS;
 extern const uint8_t Y_NEUTRAL;
+extern const uint8_t Y_INACTIVE;
 
 // State Variables
 extern uint8_t g_stateY;  // 1 = Away from body, -1 = Towards body

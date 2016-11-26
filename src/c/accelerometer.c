@@ -9,8 +9,8 @@ int16_t tiltValue = 0;         // The calculated tilt value taking into account 
 int16_t balancePoint_Y = 0;    // Where the "level" surface is.
 int16_t toleranceLevel = 175;  // Distance away from the balance point to be regarded as a tilt.
 int16_t boundsLevel = 500;     // Distance away from the balance point to obtain maximum tilt. (TODO)
-float easingValue = 1;  // 0.05
-float jitterValue = 0;  // 5
+float easingValue = 1;  // 0.05  Now is essentially off.
+float jitterValue = 0;  // 5     Now is essentially off.
 
 int16_t cutoff_x = 500;        // If abs(modelX) is > than this value then scrolling stops.
 
@@ -22,9 +22,11 @@ void update_state() {
   // Update display
   window_update_orientation(modelX, modelY, modelZ);
   
+  bool shouldCutoff = abs(modelX) > cutoff_x;
+  
   int16_t deltaTilt = 0;
   
-  if (modelY > balancePoint_Y + toleranceLevel) {
+  if (!shouldCutoff && modelY > balancePoint_Y + toleranceLevel) {
     // Facing away from body
     if (g_stateY != Y_FACE_AWAY) {
       g_stateY = Y_FACE_AWAY;
@@ -33,7 +35,7 @@ void update_state() {
     }
     deltaTilt = modelY - (balancePoint_Y + toleranceLevel) - tiltValue;
     //tiltValue = modelY - (balancePoint_Y + toleranceLevel);
-  } else if (modelY < balancePoint_Y - toleranceLevel) {
+  } else if (!shouldCutoff && modelY < balancePoint_Y - toleranceLevel) {
     // Facing towards body
     if (g_stateY != Y_FACE_TOWARDS) {
       g_stateY = Y_FACE_TOWARDS;
@@ -44,15 +46,24 @@ void update_state() {
     //tiltValue = modelY - (balancePoint_Y - toleranceLevel);
   } else {
     // Neutral position
-    if (g_stateY != Y_NEUTRAL) {
+    if (!shouldCutoff && g_stateY != Y_NEUTRAL) {
       g_stateY = Y_NEUTRAL;
       window_update_status("Neutral.");
       tiltEasing = 0.80;
     }
+    
+    if (shouldCutoff && g_stateY != Y_INACTIVE) {
+      // Cutoff.
+      g_stateY = Y_INACTIVE;
+      window_update_status("Inactive.");
+      tiltEasing = 0.80;
+    }
+    
     deltaTilt = 0 - tiltValue;
     //tiltValue = 0;
   }
   
+  // Move towards target value.
   if (abs(deltaTilt) > tiltJitter) {
     tiltValue += deltaTilt * tiltEasing;
   } else {
