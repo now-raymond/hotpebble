@@ -4,26 +4,98 @@
 // Config
 uint32_t num_samples = 3;  // Number of samples per batch/callback
 
-static void accel_data_handler(AccelData *data, uint32_t num_samples) {
-  // Read sample 0's x, y, and z values
-  int16_t x = data[0].x;
-  int16_t y = data[0].y;
-  int16_t z = data[0].z;
+int16_t modelX = 0, modelY = 0, modelZ = 0;
+int16_t tiltValue = 0;         // The calculated tilt value taking into account tolerance.
+int16_t balancePoint_Y = 0;    // Where the "level" surface is.
+int16_t toleranceLevel = 175;  // Distance away from the balance point to be regarded as a tilt.
+int16_t boundsLevel = 500;     // Distance away from the balance point to obtain maximum tilt. (TODO)
+float easingValue = 1;  // 0.05
+float jitterValue = 0;  // 5
 
+int16_t tiltJitter = 0;
+float tiltEasing = 0.05;
+
+// Determins which way the pebble is facing.
+void update_state() {
+  // Update display
+  window_update_orientation(modelX, modelY, modelZ);
+  
+  //int16_t adjustedY = modelY ;  // This value takes into account tolerance and bounds.
+  
+  int16_t deltaTilt = 0;
+  
+  if (modelY > balancePoint_Y + toleranceLevel) {
+    // Facing away from body
+    if (g_stateY != Y_FACE_AWAY) {
+      g_stateY = Y_FACE_AWAY;
+      window_update_status("Scroll down.");
+      tiltEasing = 0.05;
+    }
+    deltaTilt = modelY - (balancePoint_Y + toleranceLevel) - tiltValue;
+    //tiltValue = modelY - (balancePoint_Y + toleranceLevel);
+  } else if (modelY < balancePoint_Y - toleranceLevel) {
+    // Facing towards body
+    if (g_stateY != Y_FACE_TOWARDS) {
+      g_stateY = Y_FACE_TOWARDS;
+      window_update_status("Scroll up.");
+      tiltEasing = 0.05;
+    }
+    deltaTilt = modelY - (balancePoint_Y - toleranceLevel) - tiltValue;
+    //tiltValue = modelY - (balancePoint_Y - toleranceLevel);
+  } else {
+    // Neutral position
+    if (g_stateY != Y_NEUTRAL) {
+      g_stateY = Y_NEUTRAL;
+      window_update_status("Neutral.");
+      tiltEasing = 0.80;
+    }
+    deltaTilt = balancePoint_Y - tiltValue;
+    //tiltValue = 0;
+  }
+  
+  if (abs(deltaTilt) > tiltJitter) {
+    tiltValue += deltaTilt * tiltEasing;
+  } else {
+    tiltValue += deltaTilt;
+  }
+  
+  // Update tilt value
+  window_update_tilt_y(tiltValue);
+}
+
+static void accel_data_handler(AccelData *data, uint32_t num_samples) {
   // Determine if the sample occured during vibration, and when it occured
   bool did_vibrate = data[0].did_vibrate;
-  uint64_t timestamp = data[0].timestamp;
 
   if(!did_vibrate) {
+    // Read sample 0's x, y, and z values
+    uint64_t timestamp = data[0].timestamp;
+    int16_t x = data[0].x;
+    int16_t y = data[0].y;
+    int16_t z = data[0].z;
+    
     // Print it out
-    APP_LOG(APP_LOG_LEVEL_INFO, "t: %llu, x: %d, y: %d, z: %d", timestamp, x, y, z);
+    //APP_LOG(APP_LOG_LEVEL_INFO, "t: %llu, x: %d, y: %d, z: %d", timestamp, x, y, z);
+    
+    // Update our internal state values
+    int16_t dx = x - modelX;
+    int16_t dy = y - modelY;
+    int16_t dz = z - modelZ;
+    
+    if (abs(dx) > jitterValue || abs(dy) > jitterValue || abs(dz) > jitterValue) {
+      modelX += dx * easingValue;
+      modelY += dy * easingValue;
+      modelZ += dz * easingValue;
+    }
+    
+    update_state();
     
     // Send it to the application.
-    send_accelerometer_data(timestamp, x, y, z);
+    //send_accelerometer_data(timestamp, x, y, z);
     
   } else {
     // Discard with a warning
-    APP_LOG(APP_LOG_LEVEL_WARNING, "Vibration occured during collection");
+    APP_LOG(APP_LOG_LEVEL_WARNING, "Vibration occured during collection - discarding.");
   }
 }
 
@@ -31,7 +103,7 @@ void init_accelerometer() {
   APP_LOG(APP_LOG_LEVEL_INFO, "Initializing accelerometer.");
   // Wait 5 seconds before starting to send data.
   // NOTE: This causes the main thread to hold for 5 seconds. Remove later.
-  psleep(5000);
+  //psleep(5000);
   accel_data_service_subscribe(num_samples, accel_data_handler);
 }
 
