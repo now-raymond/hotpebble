@@ -37,6 +37,7 @@ void init_communication() {
   app_message_open(inbox_size, outbox_size);
 }
 
+// NOT CURRENTLY USED.
 // Call this function to send data to the server application.
 void send_accelerometer_data(uint64_t timestamp, int16_t x, int16_t y, int16_t z) {
   DictionaryIterator *out_iter;
@@ -61,11 +62,28 @@ void send_accelerometer_data(uint64_t timestamp, int16_t x, int16_t y, int16_t z
 }
 
 // Call this function to send tilt data to the server application.
-// Range: 0 to 1000
+// Negative values = scroll up.
 void send_tilt_data(int16_t speed) {
+  DictionaryIterator *out_iter;
   
+  // Prepare outbox buffer
+  AppMessageResult result = app_message_outbox_begin(&out_iter);
+  if (result == APP_MSG_OK) {
+    dict_write_int16(out_iter, COMMUNICATION_KEY_TILTSPEED, speed);
+    
+    result = app_message_outbox_send();
+    if(result != APP_MSG_OK) {
+      APP_LOG(APP_LOG_LEVEL_ERROR, "Error sending the outbox: %d", (int)result);
+    }
+  } else if (result == APP_MSG_BUSY) {
+    //APP_LOG(APP_LOG_LEVEL_INFO, "Busy: Target is still processing the message.");
+  } else {
+    APP_LOG(APP_LOG_LEVEL_ERROR, "Error preparing the outbox: %d", (int)result);
+  }
 }
 
+// TODO
+// Call this function to tell the server to switch contexts.
 void send_change_context() {
   
 }

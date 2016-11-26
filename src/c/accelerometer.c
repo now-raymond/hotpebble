@@ -59,8 +59,11 @@ void update_state() {
     tiltValue += deltaTilt;
   }
   
-  // Update tilt value
+  // Update tilt value on interface
   window_update_tilt_y(tiltValue);
+  
+  // Send tilt value to server
+  
 }
 
 static void accel_data_handler(AccelData *data, uint32_t num_samples) {
