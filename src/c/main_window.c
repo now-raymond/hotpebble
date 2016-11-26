@@ -1,4 +1,5 @@
 #include <pebble.h>
+#include "main.h"
 #include "main_window.h"
 
 int16_t windowHeight;
@@ -84,8 +85,23 @@ static void handle_window_unload(Window* window) {
   destroy_ui();
 }
 
+//**************************************************************************************************
+//*************************************   CLICK HANDLERS   *****************************************
+//**************************************************************************************************
+static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
+  accelerometer_calibrate_zero();
+  window_update_status("Zero calibrated.");
+}
+
+static void click_config_provider(void *context) {
+  window_single_click_subscribe(BUTTON_ID_SELECT, select_click_handler);
+  //window_single_click_subscribe(BUTTON_ID_UP, up_click_handler);
+  //window_single_click_subscribe(BUTTON_ID_DOWN, down_click_handler);
+}
+
 void show_main_window(void) {
   initialise_ui();
+  window_set_click_config_provider(s_window, click_config_provider);
   window_set_window_handlers(s_window, (WindowHandlers) {
     .unload = handle_window_unload,
   });
@@ -102,6 +118,7 @@ void hide_main_window(void) {
   window_stack_remove(s_window, true);
 }
 
+// Update on screen X Y Z labels
 void window_update_orientation(int16_t x, int16_t y, int16_t z) {
   static char bufX[] = "00000000000";
   snprintf(bufX, sizeof(bufX), "%d", x);
@@ -110,8 +127,8 @@ void window_update_orientation(int16_t x, int16_t y, int16_t z) {
   static char bufZ[] = "00000000000";
   snprintf(bufZ, sizeof(bufZ), "%d", z);
   
-  //text_layer_set_text(model_x_txt, bufX);
-  //text_layer_set_text(model_y_txt, bufY);
+  text_layer_set_text(model_x_txt, bufX);
+  text_layer_set_text(model_y_txt, bufY);
   //text_layer_set_text(model_z_txt, bufZ);
 }
 

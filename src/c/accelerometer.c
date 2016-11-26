@@ -12,6 +12,8 @@ int16_t boundsLevel = 500;     // Distance away from the balance point to obtain
 float easingValue = 1;  // 0.05
 float jitterValue = 0;  // 5
 
+int16_t cutoff_x = 500;        // If abs(modelX) is > than this value then scrolling stops.
+
 int16_t tiltJitter = 0;
 float tiltEasing = 0.05;
 
@@ -19,8 +21,6 @@ float tiltEasing = 0.05;
 void update_state() {
   // Update display
   window_update_orientation(modelX, modelY, modelZ);
-  
-  //int16_t adjustedY = modelY ;  // This value takes into account tolerance and bounds.
   
   int16_t deltaTilt = 0;
   
@@ -49,7 +49,7 @@ void update_state() {
       window_update_status("Neutral.");
       tiltEasing = 0.80;
     }
-    deltaTilt = balancePoint_Y - tiltValue;
+    deltaTilt = 0 - tiltValue;
     //tiltValue = 0;
   }
   
@@ -63,7 +63,12 @@ void update_state() {
   window_update_tilt_y(tiltValue);
   
   // Send tilt value to server
-  
+  send_tilt_data(tiltValue);
+}
+
+// Sets balancePoint_Y to the current Y axis orientation.
+void accelerometer_calibrate_zero() {
+  balancePoint_Y = modelY;
 }
 
 static void accel_data_handler(AccelData *data, uint32_t num_samples) {

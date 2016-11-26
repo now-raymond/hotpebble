@@ -20,7 +20,7 @@ static void inbox_dropped_callback(AppMessageResult reason, void *context) {
 }
 
 static void outbox_failed_callback(DictionaryIterator *iter, AppMessageResult reason, void *context) {
-  APP_LOG(APP_LOG_LEVEL_WARNING, "Message delivery failed!");
+  APP_LOG(APP_LOG_LEVEL_WARNING, "Message delivery failed! Reason: %d", reason);
 }
 
 void init_communication() {

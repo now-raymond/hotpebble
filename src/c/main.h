@@ -24,6 +24,8 @@ void init_accelerometer();
 
 void init_communication();
 void send_accelerometer_data(uint64_t timestamp, int16_t x, int16_t y, int16_t z);
+void send_tilt_data(int16_t speed);
+void accelerometer_calibrate_zero();
 
 // Main Window
 void window_update_orientation(int16_t x, int16_t y, int16_t z);
