@@ -1,0 +1,21 @@
+{
+    "author": "ruijie.tan@gmail.com",
+    "dependencies": {},
+    "keywords": [],
+    "name": "hotpebble",
+    "pebble": {
+        "displayName": "HotPebble",
+        "enableMultiJS": true,
+        "messageKeys": [],
+        "projectType": "native",
+        "resources": {
+            "media": []
+        },
+        "sdkVersion": "3",
+        "uuid": "0b97e037-a8fb-4a77-8f17-fc80eed1d34c",
+        "watchapp": {
+            "watchface": false
+        }
+    },
+    "version": "1.0.0"
+}
