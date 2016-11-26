@@ -29,6 +29,9 @@ static void accel_data_handler(AccelData *data, uint32_t num_samples) {
 
 void init_accelerometer() {
   APP_LOG(APP_LOG_LEVEL_INFO, "Initializing accelerometer.");
+  // Wait 5 seconds before starting to send data.
+  // NOTE: This causes the main thread to hold for 5 seconds. Remove later.
+  psleep(5000);
   accel_data_service_subscribe(num_samples, accel_data_handler);
 }
 
