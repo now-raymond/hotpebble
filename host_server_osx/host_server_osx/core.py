@@ -48,11 +48,6 @@ COMMAND_FULLSCREEN_EXIT = 0
 class PebbleConnectionException(Exception):
   pass
 
-def get_button_ids():
-    for press_key in ["UP", "DOWN", "SELECT"]:
-        for press_type in ["SINGLE", "LONG", "MULTI"]:
-            yield (press_key, press_type)
-
 def get_settings():
     parser = argparse.ArgumentParser(
         description='Pebble to linux keyboard bridge')
@@ -80,69 +75,72 @@ class CommandHandler:
                 data.uuid.get_hex())
             return
 
-        pair_key = data.keys()[0]
-        pair_value = data.values()[0]
+        handle_event_message(data)
 
-        if pair_key == INTENT_CONTEXT_CHANGE:
-            if pair_value == CONTEXT_SCROLL:
-                pass
-                # Stop all other stuff, do scroll stuff
-            elif pair_value == CONTEXT_SOUND:
-                # Stop all other stuff, do media stuff
-                pass
-            else:
-                pass
-        elif pair_key == COMMAND_SCROLL:
-            mouse_scroll(pair_value)
-        elif pair_key == INTENT_MEDIA_PLAY_PAUSE:
-            if pair_value == COMMAND_TOGGLE:
-                try:
-                    helpers.HIDPostAuxKey(helpers.supportedcmds['playpause'])
-                except (IndexError):
-                    print "\tSupported commands are %s" % helpers.supportedcmds.keys()
-            else:
-                pass
-        elif pair_key == INTENT_KEY_VOLUME_CHANGE:
-            if pair_value == COMMAND_NEXT_UP:
-                try:
-                    helpers.HIDPostAuxKey(helpers.supportedcmds['volup'])
-                except (IndexError):
-                    print "\tSupported commands are %s" % helpers.supportedcmds.keys()
-            elif pair_value == COMMAND_PREVIOUS_DOWN:
-                try:
-                    helpers.HIDPostAuxKey(helpers.supportedcmds['voldown'])
-                except (IndexError):
-                    print "\tSupported commands are %s" % helpers.supportedcmds.keys()
-            else:
-                pass
-        elif pair_key == INTENT_KEY_TRACK_CHANGE:
-            if pair_value == COMMAND_NEXT_UP:
-                try:
-                    helpers.HIDPostAuxKey(helpers.supportedcmds['next'])
-                except (IndexError):
-                    print "\tSupported commands are %s" % helpers.supportedcmds.keys()
-            elif pair_value == COMMAND_PREVIOUS_DOWN:
-                try:
-                    helpers.HIDPostAuxKey(helpers.supportedcmds['prev'])
-                except (IndexError):
-                    print "\tSupported commands are %s" % helpers.supportedcmds.keys()
-            else:
-                pass
-        elif pair_key == INTENT_PRESENTATION_FULLSCREEN:
-            if pair_value == COMMAND_FULLSCREEN_START:
-                pyautogui.hotkey('command', 'shift', 'enter')
-            elif pair_value == COMMAND_FULLSCREEN_EXIT:
-                pyautogui.press('esc')
-            else:
-                pass
-        elif pair_key == INTENT_PRESENTATION_SLIDE_CHANGE:
-            if pair_value == COMMAND_SLIDE_NEXT:
-                pyautogui.press('right')
-            elif pair_value == COMMAND_SLIDE_PREVIOUS:
-                pyautogui.press('left')
-            else:
-                pass
-        else: pass
+def handle_event_message(data):
+    pair_key = data.keys()[0]
+    pair_value = data.values()[0]
+
+    if pair_key == INTENT_CONTEXT_CHANGE:
+        if pair_value == CONTEXT_SCROLL:
+            pass
+            # Stop all other stuff, do scroll stuff
+        elif pair_value == CONTEXT_SOUND:
+            # Stop all other stuff, do media stuff
+            pass
+        else:
+            pass
+    elif pair_key == COMMAND_SCROLL:
+        mouse_scroll(pair_value)
+    elif pair_key == INTENT_MEDIA_PLAY_PAUSE:
+        if pair_value == COMMAND_TOGGLE:
+            try:
+                helpers.HIDPostAuxKey(helpers.supportedcmds['playpause'])
+            except (IndexError):
+                print "\tSupported commands are %s" % helpers.supportedcmds.keys()
+        else:
+            pass
+    elif pair_key == INTENT_KEY_VOLUME_CHANGE:
+        if pair_value == COMMAND_NEXT_UP:
+            try:
+                helpers.HIDPostAuxKey(helpers.supportedcmds['volup'])
+            except (IndexError):
+                print "\tSupported commands are %s" % helpers.supportedcmds.keys()
+        elif pair_value == COMMAND_PREVIOUS_DOWN:
+            try:
+                helpers.HIDPostAuxKey(helpers.supportedcmds['voldown'])
+            except (IndexError):
+                print "\tSupported commands are %s" % helpers.supportedcmds.keys()
+        else:
+            pass
+    elif pair_key == INTENT_KEY_TRACK_CHANGE:
+        if pair_value == COMMAND_NEXT_UP:
+            try:
+                helpers.HIDPostAuxKey(helpers.supportedcmds['next'])
+            except (IndexError):
+                print "\tSupported commands are %s" % helpers.supportedcmds.keys()
+        elif pair_value == COMMAND_PREVIOUS_DOWN:
+            try:
+                helpers.HIDPostAuxKey(helpers.supportedcmds['prev'])
+            except (IndexError):
+                print "\tSupported commands are %s" % helpers.supportedcmds.keys()
+        else:
+            pass
+    elif pair_key == INTENT_PRESENTATION_FULLSCREEN:
+        if pair_value == COMMAND_FULLSCREEN_START:
+            pyautogui.hotkey('command', 'shift', 'enter')
+        elif pair_value == COMMAND_FULLSCREEN_EXIT:
+            pyautogui.press('esc')
+        else:
+            pass
+    elif pair_key == INTENT_PRESENTATION_SLIDE_CHANGE:
+        if pair_value == COMMAND_SLIDE_NEXT:
+            pyautogui.press('right')
+        elif pair_value == COMMAND_SLIDE_PREVIOUS:
+            pyautogui.press('left')
+        else:
+            pass
+    else: pass
 
 def mouse_scroll(value_scroll):
     threshold = 15
@@ -188,11 +186,9 @@ class CommunicationKeeper:
         logging.warning("NACK received for packet!")
         self.nack_count += 1
         if self.nack_count > self.NACK_COUNT_LIMIT:
-            # we are inside the receive thread here, exception will kill only
-            # that
+            # we are inside the receive thread here, exception will kill only that
             self.error = "Nack count limit reached, something is wrong."
             return
-        # self.send_message( self.pending[transaction_id] )
         del self.pending[transaction_id]
 
     def ack_received(self, transaction_id, uuid):
