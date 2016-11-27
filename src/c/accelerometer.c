@@ -15,7 +15,7 @@ float jitterValue = 0;  // 5     Now is essentially off.
 int16_t cutoff_x = 500;        // If abs(modelX) is > than this value then scrolling stops.
 
 int16_t tiltJitter = 0;
-float tiltEasing = 0.05;
+float tiltEasing = 0.08; // originally 0.05
 
 // Determins which way the pebble is facing.
 void update_state() {
@@ -31,7 +31,7 @@ void update_state() {
     if (g_stateY != Y_FACE_AWAY) {
       g_stateY = Y_FACE_AWAY;
       window_update_status("Scroll down.");
-      tiltEasing = 0.05;
+      tiltEasing = 0.08;
     }
     deltaTilt = modelY - (balancePoint_Y + toleranceLevel) - tiltValue;
     //tiltValue = modelY - (balancePoint_Y + toleranceLevel);
@@ -40,22 +40,21 @@ void update_state() {
     if (g_stateY != Y_FACE_TOWARDS) {
       g_stateY = Y_FACE_TOWARDS;
       window_update_status("Scroll up.");
-      tiltEasing = 0.05;
+      tiltEasing = 0.08;
     }
     deltaTilt = modelY - (balancePoint_Y - toleranceLevel) - tiltValue;
     //tiltValue = modelY - (balancePoint_Y - toleranceLevel);
   } else {
-    // Neutral position
-    if (!shouldCutoff && g_stateY != Y_NEUTRAL) {
-      g_stateY = Y_NEUTRAL;
-      window_update_status("Neutral.");
-      tiltEasing = 0.80;
-    }
     
     if (shouldCutoff && g_stateY != Y_INACTIVE) {
       // Cutoff.
       g_stateY = Y_INACTIVE;
       window_update_status("Inactive.");
+      tiltEasing = 0.80;
+    } else if (!shouldCutoff && g_stateY != Y_NEUTRAL) {
+      // Neutral position
+      g_stateY = Y_NEUTRAL;
+      window_update_status("Neutral.");
       tiltEasing = 0.80;
     }
     

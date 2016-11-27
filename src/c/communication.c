@@ -82,8 +82,24 @@ void send_tilt_data(int16_t speed) {
   }
 }
 
-// TODO
 // Call this function to tell the server to switch contexts.
-void send_change_context() {
+void send_change_context(uint8_t new_context) {
+  DictionaryIterator *out_iter;
   
+  // Prepare outbox buffer
+  AppMessageResult result = app_message_outbox_begin(&out_iter);
+  if (result == APP_MSG_OK) {
+    dict_write_int16(out_iter, COMMUNICATION_KEY_CHANGE_CONTEXT, new_context);
+    
+    result = app_message_outbox_send();
+    if (result != APP_MSG_OK) {
+      APP_LOG(APP_LOG_LEVEL_ERROR, "Error sending the outbox: %d", (int)result);
+    } else {
+      APP_LOG(APP_LOG_LEVEL_INFO, "Context change message sent successfully.");
+    }
+  } else if (result == APP_MSG_BUSY) {
+    APP_LOG(APP_LOG_LEVEL_INFO, "Busy: Target is still processing the message.");
+  } else {
+    APP_LOG(APP_LOG_LEVEL_ERROR, "Error preparing the outbox: %d", (int)result);
+  }
 }
