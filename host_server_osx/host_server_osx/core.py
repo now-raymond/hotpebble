@@ -19,9 +19,31 @@ from libpebble2.services.appmessage import *
 from libpebble2.protocol.apps import AppRunStateStart
 from libpebble2.protocol.apps import AppRunState
 import libpebble2.exceptions
+import pyautogui
+import helpers
+from pynput import mouse
+
 
 COMMUNICATION_KEY_CONFIG = 200
 COMMUNICATION_KEY_PING = 100
+mouse = mouse.Controller()
+
+CONTEXT_SCROLL = 1
+CONTEXT_SOUND = 2
+COMMAND_SCROLL = 200
+INTENT_CONTEXT_CHANGE = 300
+INTENT_MEDIA_PLAY_PAUSE = 500
+INTENT_KEY_VOLUME_CHANGE = 501
+INTENT_KEY_TRACK_CHANGE = 502
+INTENT_PRESENTATION_SLIDE_CHANGE = 600
+INTENT_PRESENTATION_FULLSCREEN = 601
+COMMAND_TOGGLE = 1
+COMMAND_NEXT_UP = 1
+COMMAND_PREVIOUS_DOWN = -1
+COMMAND_SLIDE_NEXT = 1
+COMMAND_SLIDE_PREVIOUS = -1
+COMMAND_FULLSCREEN_START = 1
+COMMAND_FULLSCREEN_EXIT = 0
 
 class PebbleConnectionException(Exception):
   pass
@@ -44,17 +66,6 @@ def get_settings():
     settings.device = conf.get('main', 'device')
     settings.uuid = conf.get('main', 'uuid')
 
-    settings.key_mappings = {}
-
-    for (id_key, id_type) in get_button_ids():
-        id_full = id_key + "," + id_type
-
-        try:
-            cmd = conf.get('commands', id_full)
-        except ConfigParser.NoOptionError:
-            continue
-        settings.key_mappings[id_key[0] + "," + id_type[0]] = cmd
-    print("Settings is good")
     return settings
 
 class CommandHandler:
@@ -63,41 +74,87 @@ class CommandHandler:
         self.settings = settings
 
     def message_received_event(self, transaction_id, uuid, data):
-        print("Entering a message event...")
         if uuid.get_hex() != self.settings.uuid:
-            print("input uuid and settings uuid don't match")
             logging.debug(
                 "Ignoring appdata from unknown sender (%s)" %
                 data.uuid.get_hex())
             return
-        print("uuids MATCH")
-        print(self)
-        print(transaction_id)
-        print(uuid)
-        print(data)
-        print(data.get(200))
-        test_volume_change(data.get(200))
-        # assert (1 in data), "Missing key on data structure"
-        # assert (2 in data), "Missing key on data structure"
-        #
-        # key_id = chr(data[2]) + "," + chr(data[1])
-        #
-        # if key_id not in self.settings.key_mappings:
-        #     logging.warning("Ignoring key press '%s' of unknown id. " % key_id)
-        #     return
-        # to_emulate = self.settings.key_mappings[key_id]
-        # print("Command called: '%s' " % to_emulate)
-        # subprocess_call(to_emulate, shell=True)
 
-def test_volume_change(yValue):
-    if (yValue > 200):
-        # up volume
-        pass
-    elif (yValue < -200):
-        # down volume
-        pass
+        pair_key = data.keys()[0]
+        pair_value = data.values()[0]
+
+        if pair_key == INTENT_CONTEXT_CHANGE:
+            if pair_value == CONTEXT_SCROLL:
+                pass
+                # Stop all other stuff, do scroll stuff
+            elif pair_value == CONTEXT_SOUND:
+                # Stop all other stuff, do media stuff
+                pass
+            else:
+                pass
+        elif pair_key == COMMAND_SCROLL:
+            mouse_scroll(pair_value)
+        elif pair_key == INTENT_MEDIA_PLAY_PAUSE:
+            if pair_value == COMMAND_TOGGLE:
+                try:
+                    helpers.HIDPostAuxKey(helpers.supportedcmds['playpause'])
+                except (IndexError):
+                    print "\tSupported commands are %s" % helpers.supportedcmds.keys()
+            else:
+                pass
+        elif pair_key == INTENT_KEY_VOLUME_CHANGE:
+            if pair_value == COMMAND_NEXT_UP:
+                try:
+                    helpers.HIDPostAuxKey(helpers.supportedcmds['volup'])
+                except (IndexError):
+                    print "\tSupported commands are %s" % helpers.supportedcmds.keys()
+            elif pair_value == COMMAND_PREVIOUS_DOWN:
+                try:
+                    helpers.HIDPostAuxKey(helpers.supportedcmds['voldown'])
+                except (IndexError):
+                    print "\tSupported commands are %s" % helpers.supportedcmds.keys()
+            else:
+                pass
+        elif pair_key == INTENT_KEY_TRACK_CHANGE:
+            if pair_value == COMMAND_NEXT_UP:
+                try:
+                    helpers.HIDPostAuxKey(helpers.supportedcmds['next'])
+                except (IndexError):
+                    print "\tSupported commands are %s" % helpers.supportedcmds.keys()
+            elif pair_value == COMMAND_PREVIOUS_DOWN:
+                try:
+                    helpers.HIDPostAuxKey(helpers.supportedcmds['prev'])
+                except (IndexError):
+                    print "\tSupported commands are %s" % helpers.supportedcmds.keys()
+            else:
+                pass
+        elif pair_key == INTENT_PRESENTATION_FULLSCREEN:
+            if pair_value == COMMAND_FULLSCREEN_START:
+                pyautogui.hotkey('command', 'shift', 'enter')
+            elif pair_value == COMMAND_FULLSCREEN_EXIT:
+                pyautogui.press('esc')
+            else:
+                pass
+        elif pair_key == INTENT_PRESENTATION_SLIDE_CHANGE:
+            if pair_value == COMMAND_SLIDE_NEXT:
+                pyautogui.press('right')
+            elif pair_value == COMMAND_SLIDE_PREVIOUS:
+                pyautogui.press('left')
+            else:
+                pass
+        else: pass
+
+def mouse_scroll(value_scroll):
+    threshold = 15
+    limiter = 0.015
+    if value_scroll < -threshold:
+        final_value_scroll = int(limiter * (-value_scroll+threshold))
+        mouse.scroll(0, final_value_scroll)
+
+    elif value_scroll > threshold:
+        final_value_scroll = int(limiter * (-value_scroll-threshold))
+        mouse.scroll(0, final_value_scroll)
     else:
-        # Do not do anything
         pass
 
 class CommunicationKeeper:
@@ -114,12 +171,10 @@ class CommunicationKeeper:
 
     def check_uuid(self, uuid):
         if uuid != self.uuid:
-            print("unknown sender")
             logging.debug(
                 "Ignoring appdata from unknown sender (%s)" %
                 data.uuid.get_hex())
             return False
-        print("known sender")
         return True
 
     def nack_received(self, transaction_id, uuid):
@@ -160,14 +215,11 @@ def main(settings):
         pebble = PebbleConnection(WebsocketTransport(settings.device), log_packet_level=logging.DEBUG)
     else: # No elif, for compatibility with older configs
         pebble = PebbleConnection(SerialTransport(settings.device), log_packet_level=logging.DEBUG)
-        print("Connecting to Serial Bluetooth")
     pebble.connect()
 
     if (pebble.connected):
         print("Pebble successfully connected.")
 
-    # For some reason it seems to timeout for the first time, with "somebody is eating our input" error,
-    # replying seems to help.
     try:
         pebble.run_async()
     except libpebble2.exceptions.TimeoutError:
@@ -175,7 +227,7 @@ def main(settings):
         logging.info("Pebble timeouted")
 
     # Install app
-    # AppInstaller(pebble, "hotpebble.pbw").install()
+    AppInstaller(pebble, "../hotpebble.pbw").install()
 
     # Register service for app messages
     appservice = AppMessageService(pebble)
@@ -188,28 +240,6 @@ def main(settings):
     # Start the watchapp
     pebble.send_packet(AppRunState(command = 0x01, data=AppRunStateStart(uuid = uuid.UUID(settings.uuid))))
 
-    # # Send our current config
-    # for (id_key, id_type) in get_button_ids():
-    #     id_full = id_key[0] + "," + id_type[0]
-    #     if id_full in settings.key_mappings:
-    #         status = "T"
-    #     else:
-    #         status = "F"
-    #
-    #     data = id_key[0] + id_type[0] + status
-    #     commwatch.send_message({COMMUNICATION_KEY_CONFIG: CString(data)})
-    #
-    #     # Wait for all
-    #     for loop in range(10):
-    #         if len(commwatch.pending) == 0:
-    #             break
-    #         if commwatch.error:
-    #             raise PebbleConnectionException("Commwatch:" + commwatch.error)
-    #         time.sleep(0.1)
-    #     else:
-    #         raise PebbleConnectionException("Pebble not respoding to config")
-
-    print("Connection ok, entering to active state...")
     logging.info("Connection ok, entering to active state...")
     appservice.register_handler("appmessage", handler.message_received_event)
 
@@ -220,7 +250,6 @@ def main(settings):
 
 if __name__ == "__main__":
     try:
-        print("Getting settings now")
         main(get_settings())
     except PebbleConnectionException as error :
         logging.error("PebbleConnectionException: " + str(error) )
