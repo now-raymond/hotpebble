@@ -28,8 +28,8 @@ COMMUNICATION_KEY_CONFIG = 200
 COMMUNICATION_KEY_PING = 100
 mouse = mouse.Controller()
 
-CONTEXT_SCROLL = 1
-CONTEXT_SOUND = 2
+CONTEXT_SCROLL = 2
+CONTEXT_SOUND = 1
 COMMAND_SCROLL = 200
 INTENT_CONTEXT_CHANGE = 300
 INTENT_MEDIA_PLAY_PAUSE = 500
@@ -80,6 +80,7 @@ class CommandHandler:
 def handle_event_message(data):
     pair_key = data.keys()[0]
     pair_value = data.values()[0]
+    print(pair_key, pair_value)
 
     if pair_key == INTENT_CONTEXT_CHANGE:
         if pair_value == CONTEXT_SCROLL:
