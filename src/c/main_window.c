@@ -5,10 +5,13 @@
 int16_t windowHeight;
 int16_t windowWidth;
 
+bool movePebble = false;
+
 // BEGIN AUTO-GENERATED UI CODE; DO NOT MODIFY
 static Window *s_window;
 static GFont s_res_gothic_28_bold;
 static GFont s_res_gothic_18_bold;
+static GBitmap *s_res_red_pebble;
 static TextLayer *s_textlayer_1;
 static TextLayer *model_x_txt;
 static TextLayer *model_y_txt;
@@ -25,29 +28,30 @@ static void initialise_ui(void) {
   
   s_res_gothic_28_bold = fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD);
   s_res_gothic_18_bold = fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD);
+  s_res_red_pebble = gbitmap_create_with_resource(RESOURCE_ID_Red_Pebble);
   // s_textlayer_1
-  s_textlayer_1 = text_layer_create(GRect(19, 16, 100, 28));
+  s_textlayer_1 = text_layer_create(GRect(11, 34, 100, 28));
   text_layer_set_text(s_textlayer_1, "HotPebble");
   text_layer_set_text_alignment(s_textlayer_1, GTextAlignmentCenter);
   text_layer_set_font(s_textlayer_1, s_res_gothic_28_bold);
   layer_add_child(window_get_root_layer(s_window), (Layer *)s_textlayer_1);
   
   // model_x_txt
-  model_x_txt = text_layer_create(GRect(4, 60, 42, 21));
+  model_x_txt = text_layer_create(GRect(4, 75, 42, 21));
   text_layer_set_text(model_x_txt, "-");
   text_layer_set_text_alignment(model_x_txt, GTextAlignmentCenter);
   text_layer_set_font(model_x_txt, s_res_gothic_18_bold);
   layer_add_child(window_get_root_layer(s_window), (Layer *)model_x_txt);
   
   // model_y_txt
-  model_y_txt = text_layer_create(GRect(47, 60, 42, 20));
+  model_y_txt = text_layer_create(GRect(47, 75, 42, 20));
   text_layer_set_text(model_y_txt, "-");
   text_layer_set_text_alignment(model_y_txt, GTextAlignmentCenter);
   text_layer_set_font(model_y_txt, s_res_gothic_18_bold);
   layer_add_child(window_get_root_layer(s_window), (Layer *)model_y_txt);
   
   // model_z_txt
-  model_z_txt = text_layer_create(GRect(89, 60, 46, 24));
+  model_z_txt = text_layer_create(GRect(90, 75, 46, 24));
   text_layer_set_text(model_z_txt, "-");
   text_layer_set_text_alignment(model_z_txt, GTextAlignmentCenter);
   text_layer_set_font(model_z_txt, s_res_gothic_18_bold);
@@ -60,13 +64,13 @@ static void initialise_ui(void) {
   layer_add_child(window_get_root_layer(s_window), (Layer *)s_statusmessage);
   
   // s_bitmaplayer_1
-  s_bitmaplayer_1 = bitmap_layer_create(GRect(117, 81, 18, 20));
-  bitmap_layer_set_background_color(s_bitmaplayer_1, GColorBlack);
+  s_bitmaplayer_1 = bitmap_layer_create(GRect(109, 43, 18, 19));
+  bitmap_layer_set_bitmap(s_bitmaplayer_1, s_res_red_pebble);
   layer_add_child(window_get_root_layer(s_window), (Layer *)s_bitmaplayer_1);
   
   // s_text_tilt
-  s_text_tilt = text_layer_create(GRect(42, 97, 49, 22));
-  text_layer_set_text(s_text_tilt, "-250");
+  s_text_tilt = text_layer_create(GRect(45, 109, 49, 21));
+  text_layer_set_text(s_text_tilt, "250");
   text_layer_set_text_alignment(s_text_tilt, GTextAlignmentCenter);
   text_layer_set_font(s_text_tilt, s_res_gothic_18_bold);
   layer_add_child(window_get_root_layer(s_window), (Layer *)s_text_tilt);
@@ -81,6 +85,7 @@ static void destroy_ui(void) {
   text_layer_destroy(s_statusmessage);
   bitmap_layer_destroy(s_bitmaplayer_1);
   text_layer_destroy(s_text_tilt);
+  gbitmap_destroy(s_res_red_pebble);
 }
 // END AUTO-GENERATED UI CODE
 
@@ -235,12 +240,14 @@ void window_update_tilt_y(int16_t y) {
   snprintf(bufY, sizeof(bufY), "%d", y);
   text_layer_set_text(s_text_tilt, bufY);
   
-  Layer *bitmapLayer = bitmap_layer_get_layer(s_bitmaplayer_1);
-  GRect frame = layer_get_frame(bitmapLayer);
-  frame.origin.y = (y+500) * windowHeight / 1000;
-  //APP_LOG(APP_LOG_LEVEL_INFO, "Putting at y: %d.", (y+500) * windowHeight / 1000);
-  //frame.origin.y = 50;
-  layer_set_frame(bitmapLayer, frame);
+  if (movePebble) {
+    Layer *bitmapLayer = bitmap_layer_get_layer(s_bitmaplayer_1);
+    GRect frame = layer_get_frame(bitmapLayer);
+    frame.origin.y = (y+500) * windowHeight / 1000;
+    //APP_LOG(APP_LOG_LEVEL_INFO, "Putting at y: %d.", (y+500) * windowHeight / 1000);
+    //frame.origin.y = 50;
+    layer_set_frame(bitmapLayer, frame);
+  }
 }
 
 void window_update_status(const char* messageString) {
