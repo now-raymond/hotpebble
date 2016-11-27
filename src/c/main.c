@@ -1,6 +1,7 @@
 #include <pebble.h>
 #include "main.h"
 #include "main_window.h"
+#include "swaypattern.h"
 
 // Global variables initialization
 const uint8_t Y_FACE_AWAY    = 1;
@@ -16,6 +17,8 @@ static void init(void) {
   show_main_window();
   init_communication();
   init_accelerometer();
+  init_sway();
+  show_swaypattern();
 }
 
 // Destruction

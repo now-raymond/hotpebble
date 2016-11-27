@@ -18,6 +18,7 @@ extern uint8_t g_currentContext;
 #define NUM_CONTEXTS 2
 #define CONTEXT_SCROLL 1
 #define CONTEXT_MEDIA 2
+#define CONTEXT_PRESENTATION 3
 
 // Accelerometer.c
 void init_accelerometer();
@@ -52,3 +53,7 @@ void window_update_tilt_y(int16_t y);
 void switch_context(uint8_t new_context);
 void next_context();
 void previous_context();
+
+// Sway.c
+void init_sway();
+void sway_accel_handler(AccelData *data, uint32_t num_samples);
