@@ -9,7 +9,7 @@ const uint8_t Y_FACE_TOWARDS = -1;
 const uint8_t Y_NEUTRAL = 0;
 const uint8_t Y_INACTIVE = -1;
 uint8_t g_stateY = 0;
-uint8_t g_currentContext = CONTEXT_SCROLL;
+uint8_t g_currentContext = CONTEXT_MEDIA;
 
 // App initialisation
 static void init(void) {
@@ -35,6 +35,9 @@ void switch_context(uint8_t new_context) {
       break;
     case CONTEXT_MEDIA:
       window_update_status("MEDIA");
+      break;
+    case CONTEXT_PRESENTATION:
+      window_update_status("PRESENTATION");
       break;
   }
 }

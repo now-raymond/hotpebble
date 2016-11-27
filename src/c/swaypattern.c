@@ -1,5 +1,7 @@
 #include <pebble.h>
 #include "swaypattern.h"
+#include "main.h"
+#include "main_window.h"
 
 // BEGIN AUTO-GENERATED UI CODE; DO NOT MODIFY
 static Window *s_window;
@@ -104,7 +106,7 @@ static int match () {
     matched = true;
     for(i=0; i<3 && matched; i++){
       int error = abs(percentage[i] - matches[count][i]);
-      APP_LOG(APP_LOG_LEVEL_INFO, "error is: %d", error);
+//       APP_LOG(APP_LOG_LEVEL_INFO, "error is: %d", error);
       if (error > error_margin) {
         matched = false;
       }
@@ -134,6 +136,64 @@ static int match () {
   
 // }
 
+static void matched_action (int pattern) {
+  if (g_currentContext == CONTEXT_MEDIA) {
+    switch (pattern) {
+      case 1:
+        g_currentContext = CONTEXT_SCROLL;
+        show_main_window();
+        break;
+      case 0:
+        send_action_message(COMMUNICATION_KEY_TRACK_CHANGE, 1);
+       break;
+      case 2:
+        send_action_message(COMMUNICATION_KEY_TRACK_CHANGE, -1);  
+        break;
+      case 3:
+        send_action_message(COMMUNICATION_KEY_PLAY_PAUSE, 1);
+        break;
+      case 4:
+        g_currentContext = CONTEXT_PRESENTATION;
+        show_main_window();
+        break;
+      default:
+        break;
+    }
+  }
+  else if (g_currentContext == CONTEXT_SCROLL) {
+    switch (pattern) {
+      case 1:
+        g_currentContext = CONTEXT_MEDIA;
+        hide_main_window();
+        break;
+      case 4:
+        g_currentContext = CONTEXT_PRESENTATION;
+
+        break;
+      default:
+      break;
+    }
+
+  }
+  else if (g_currentContext == CONTEXT_PRESENTATION) {
+    switch (pattern) {
+      case 0:
+        send_action_message(COMMUNICATION_KEY_CHANGE_SLIDE, 1);
+        break;
+      case 1:
+        g_currentContext = CONTEXT_MEDIA;
+        hide_main_window();
+        break;
+      case 2:
+        send_action_message(COMMUNICATION_KEY_CHANGE_SLIDE, -1);
+        break;
+      default:
+      break;
+    }
+
+  }
+}
+
 static void findDifference() {
   total = 0;
   for (diff_head=0; diff_head<3;diff_head++) {
@@ -141,7 +201,7 @@ static void findDifference() {
     total = total + difference[diff_head];
   }
   
-  APP_LOG(APP_LOG_LEVEL_INFO, " diff %lu, %lu, %lu", difference[0], difference[1], difference[2]);
+//   APP_LOG(APP_LOG_LEVEL_INFO, " diff %lu, %lu, %lu", difference[0], difference[1], difference[2]);
 
   int count;
 //   APP_LOG(APP_LOG_LEVEL_INFO, "%d",total);
@@ -150,14 +210,14 @@ static void findDifference() {
     percentage[count] = (difference[count]*100)/total;
   }
   
-  APP_LOG(APP_LOG_LEVEL_INFO, "perc %d, %d, %d", percentage[0], percentage[1], percentage[2]);
+//   APP_LOG(APP_LOG_LEVEL_INFO, "perc %d, %d, %d", percentage[0], percentage[1], percentage[2]);
 
 }
 
 static void recordTime() {
   time_ms(&history_s[head%4], &history_ms[head%4]);
-  APP_LOG(APP_LOG_LEVEL_INFO, " s %lu, %lu, %lu, %lu", history_s[0], history_s[1], history_s[2], history_s[3]);
-  APP_LOG(APP_LOG_LEVEL_INFO, " ms %u, %u, %u, %u", history_ms[0], history_ms[1], history_ms[2], history_ms[3]);
+//   APP_LOG(APP_LOG_LEVEL_INFO, " s %lu, %lu, %lu, %lu", history_s[0], history_s[1], history_s[2], history_s[3]);
+//   APP_LOG(APP_LOG_LEVEL_INFO, " ms %u, %u, %u, %u", history_ms[0], history_ms[1], history_ms[2], history_ms[3]);
 
   head++;
   if (head>3) {
@@ -170,6 +230,7 @@ static void recordTime() {
         text_layer_set_text(s_textlayer_1, test);
         APP_LOG(APP_LOG_LEVEL_INFO, "MATCHED!! patern %d",result);
         vibes_short_pulse();
+        matched_action(result);
         head = 0;
       }
     }
@@ -312,14 +373,14 @@ void sway_accel_handler(AccelData *data, uint32_t num_samples) {
       if (same) {
         calibrating = false;
         text_layer_set_text(s_textlayer_1, "Callibrated");
-        window_set_background_color(s_window, GColorBlack);
-        text_layer_set_text_color(s_textlayer_1, GColorWhite);
+//         window_set_background_color(s_window, GColorBlack);
+//         text_layer_set_text_color(s_textlayer_1, GColorWhite);
         APP_LOG(APP_LOG_LEVEL_INFO, "calibratied");    
         fixed_avg = history_avg;
         calibrate_timer = app_timer_register(3000, (AppTimerCallback) calibrate_timer_callback, NULL); 
       }
       else {
-        window_set_background_color(s_window, GColorWhite);
+//         window_set_background_color(s_window, GColorWhite);
         //text_layer_set_text_color(s_textlayer_1, GColorBlack);
         //text_layer_set_text(s_textlayer_1, "Hold Still!!");
       }
@@ -329,13 +390,13 @@ void sway_accel_handler(AccelData *data, uint32_t num_samples) {
     
     if (!calibrating) {
       int real_avg = avg - fixed_avg;
-      APP_LOG(APP_LOG_LEVEL_INFO, "%d", real_avg);    
+//       APP_LOG(APP_LOG_LEVEL_INFO, "%d", real_avg);    
 
       
       if (changes < 3) {
         if (real_avg>300) {
           if (pos<1) {
-            APP_LOG(APP_LOG_LEVEL_INFO, "pos");    
+//             APP_LOG(APP_LOG_LEVEL_INFO, "pos");    
             pos = 1;
             changes++;
             recordTime();
@@ -345,7 +406,7 @@ void sway_accel_handler(AccelData *data, uint32_t num_samples) {
         
         if (real_avg < -300) {
           if (pos > -1) {
-            APP_LOG(APP_LOG_LEVEL_INFO, "neg");    
+//             APP_LOG(APP_LOG_LEVEL_INFO, "neg");    
             pos = -1;
             changes++;
             recordTime();

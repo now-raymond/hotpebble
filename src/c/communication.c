@@ -5,13 +5,19 @@
 const uint32_t inbox_size = 256;
 const uint32_t outbox_size = 256;
 
+int8_t pending_context = -1;
+
 // Success callbacks
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
   APP_LOG(APP_LOG_LEVEL_INFO, "Message was received.");
 }
 
 static void outbox_sent_callback(DictionaryIterator *iter, void *context) {
-  APP_LOG(APP_LOG_LEVEL_INFO, "Message was successfully sent.");
+  //APP_LOG(APP_LOG_LEVEL_INFO, "Message was successfully sent.");
+  if (pending_context > -1) {
+    APP_LOG(APP_LOG_LEVEL_INFO, "There is a pending context change.");
+    send_change_context(pending_context);
+  }
 }
 
 // Failure callbacks
@@ -83,7 +89,7 @@ void send_tilt_data(int16_t speed) {
 }
 
 // Call this function to tell the server to switch contexts.
-void send_change_context(uint8_t new_context) {
+void send_change_context(int8_t new_context) {
   APP_LOG(APP_LOG_LEVEL_INFO, "Attempting to switch to context %d.", new_context);
   DictionaryIterator *out_iter;
   
@@ -98,9 +104,11 @@ void send_change_context(uint8_t new_context) {
       APP_LOG(APP_LOG_LEVEL_ERROR, "Error sending the context change message: %d", (int)result);
     } else {
       APP_LOG(APP_LOG_LEVEL_INFO, "Context change message sent successfully.");
+      pending_context = -1;
     }
   } else if (result == APP_MSG_BUSY) {
     APP_LOG(APP_LOG_LEVEL_INFO, "Busy: Target is still processing the message.");
+    pending_context = new_context;
   } else {
     APP_LOG(APP_LOG_LEVEL_ERROR, "Error preparing the outbox: %d", (int)result);
   }

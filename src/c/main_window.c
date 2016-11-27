@@ -98,6 +98,10 @@ static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
       window_update_status("Play/Pause.");
       send_action_message(COMMUNICATION_KEY_PLAY_PAUSE, 1);
       break;
+    case CONTEXT_PRESENTATION:
+      window_update_status("Fullscreen.");
+      send_action_message(COMMUNICATION_KEY_FULLSCREEN, 1);
+      break;
   }
 }
 
@@ -110,6 +114,10 @@ static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
       window_update_status("Volume up.");
       send_action_message(COMMUNICATION_KEY_VOLUME, 1);
       break;
+    case CONTEXT_PRESENTATION:
+      window_update_status("Next slide.");
+      send_action_message(COMMUNICATION_KEY_CHANGE_SLIDE, 1);
+      break;
   }
 }
 
@@ -121,6 +129,10 @@ static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
     case CONTEXT_MEDIA:
       window_update_status("Volume down.");
       send_action_message(COMMUNICATION_KEY_VOLUME, -1);
+      break;
+    case CONTEXT_PRESENTATION:
+      window_update_status("Previous slide.");
+      send_action_message(COMMUNICATION_KEY_CHANGE_SLIDE, -1);
       break;
   }
 }
@@ -137,6 +149,33 @@ static void select_long_click_handler(ClickRecognizerRef recognizer, void *conte
   
 }
 
+void up_multi_click_handler(ClickRecognizerRef recognizer, void *context) {
+  switch (g_currentContext) {
+    case CONTEXT_MEDIA:
+      window_update_status("Next track.");
+      send_action_message(COMMUNICATION_KEY_TRACK_CHANGE, 1);
+      break;
+  }
+}
+
+void down_multi_click_handler(ClickRecognizerRef recognizer, void *context) {
+  switch (g_currentContext) {
+    case CONTEXT_MEDIA:
+      window_update_status("Previous track.");
+      send_action_message(COMMUNICATION_KEY_TRACK_CHANGE, -1);
+      break;
+  }
+}
+
+void select_multi_click_handler(ClickRecognizerRef recognizer, void *context) {
+  switch (g_currentContext) {
+    case CONTEXT_PRESENTATION:
+      window_update_status("Exit fullscreen.");
+      send_action_message(COMMUNICATION_KEY_FULLSCREEN, 0);
+      break;
+  }
+}
+
 static void click_config_provider(void *context) {
   window_single_click_subscribe(BUTTON_ID_SELECT, select_click_handler);
   window_single_click_subscribe(BUTTON_ID_UP, up_click_handler);
@@ -145,6 +184,10 @@ static void click_config_provider(void *context) {
   window_long_click_subscribe(BUTTON_ID_SELECT, 700, select_long_click_handler, NULL);
   window_long_click_subscribe(BUTTON_ID_UP, 700, up_long_click_handler, NULL);
   window_long_click_subscribe(BUTTON_ID_DOWN, 700, down_long_click_handler, NULL);
+  
+  window_multi_click_subscribe(BUTTON_ID_SELECT, 2, 0, 0, true, select_multi_click_handler);
+  window_multi_click_subscribe(BUTTON_ID_UP, 2, 0, 0, true, up_multi_click_handler);
+  window_multi_click_subscribe(BUTTON_ID_DOWN, 2, 0, 0, true, down_multi_click_handler);
 }
 
 void show_main_window(void) {
@@ -175,8 +218,8 @@ void window_update_orientation(int16_t x, int16_t y, int16_t z) {
   static char bufZ[] = "00000000000";
   snprintf(bufZ, sizeof(bufZ), "%d", z);
   
-  text_layer_set_text(model_x_txt, bufX);
-  text_layer_set_text(model_y_txt, bufY);
+  //text_layer_set_text(model_x_txt, bufX);
+  //text_layer_set_text(model_y_txt, bufY);
   //text_layer_set_text(model_z_txt, bufZ);
 }
 

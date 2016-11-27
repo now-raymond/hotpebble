@@ -50,12 +50,12 @@ void update_state() {
       // Cutoff.
       g_stateY = Y_INACTIVE;
       window_update_status("Inactive.");
-      tiltEasing = 0.80;
+      tiltEasing = 0.95;
     } else if (!shouldCutoff && g_stateY != Y_NEUTRAL) {
       // Neutral position
       g_stateY = Y_NEUTRAL;
       window_update_status("Neutral.");
-      tiltEasing = 0.80;
+      tiltEasing = 0.95;
     }
     
     deltaTilt = 0 - tiltValue;
