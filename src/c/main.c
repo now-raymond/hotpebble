@@ -29,19 +29,23 @@ void switch_context(uint8_t new_context) {
 }
 void next_context() {
   uint8_t nextContext = g_currentContext + 1;
-  if (g_currentContext > NUM_CONTEXTS) {
+  if (nextContext > NUM_CONTEXTS) {
     // Back to first context.
-    g_currentContext -= NUM_CONTEXTS;
+    g_currentContext = nextContext - NUM_CONTEXTS;
+  } else {
+    g_currentContext = nextContext;
   }
-  switch_context(nextContext);
+  switch_context(g_currentContext);
 }
 void previous_context() {
   uint8_t prevContext = g_currentContext - 1;
-  if (g_currentContext < 1) {
+  if (prevContext < 1) {
     // Back to last context.
     g_currentContext = NUM_CONTEXTS;
+  } else {
+    g_currentContext = prevContext;
   }
-  switch_context(prevContext);
+  switch_context(g_currentContext);
 }
 
 //**************************************************************************************************
