@@ -89,22 +89,62 @@ static void handle_window_unload(Window* window) {
 //*************************************   CLICK HANDLERS   *****************************************
 //**************************************************************************************************
 static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
-  accelerometer_calibrate_zero();
-  window_update_status("Zero calibrated.");
+  switch (g_currentContext) {
+    case CONTEXT_SCROLL:
+      accelerometer_calibrate_zero();
+      window_update_status("Zero calibrated.");
+      break;
+    case CONTEXT_MEDIA:
+      window_update_status("Play/Pause.");
+      send_action_message(COMMUNICATION_KEY_PLAY_PAUSE, 1);
+      break;
+  }
 }
 
 static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
-  previous_context();
+  switch (g_currentContext) {
+    case CONTEXT_SCROLL:
+      previous_context();
+      break;
+    case CONTEXT_MEDIA:
+      window_update_status("Volume up.");
+      send_action_message(COMMUNICATION_KEY_VOLUME, 1);
+      break;
+  }
 }
 
 static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
+  switch (g_currentContext) {
+    case CONTEXT_SCROLL:
+      next_context();
+      break;
+    case CONTEXT_MEDIA:
+      window_update_status("Volume down.");
+      send_action_message(COMMUNICATION_KEY_VOLUME, -1);
+      break;
+  }
+}
+
+static void up_long_click_handler(ClickRecognizerRef recognizer, void *context) {
+  previous_context();
+}
+
+static void down_long_click_handler(ClickRecognizerRef recognizer, void *context) {
   next_context();
+}
+
+static void select_long_click_handler(ClickRecognizerRef recognizer, void *context) {
+  
 }
 
 static void click_config_provider(void *context) {
   window_single_click_subscribe(BUTTON_ID_SELECT, select_click_handler);
   window_single_click_subscribe(BUTTON_ID_UP, up_click_handler);
   window_single_click_subscribe(BUTTON_ID_DOWN, down_click_handler);
+  
+  window_long_click_subscribe(BUTTON_ID_SELECT, 700, select_long_click_handler, NULL);
+  window_long_click_subscribe(BUTTON_ID_UP, 700, up_long_click_handler, NULL);
+  window_long_click_subscribe(BUTTON_ID_DOWN, 700, down_long_click_handler, NULL);
 }
 
 void show_main_window(void) {

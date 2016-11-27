@@ -82,6 +82,8 @@ void accelerometer_calibrate_zero() {
 }
 
 static void accel_data_handler(AccelData *data, uint32_t num_samples) {
+  if (g_currentContext != CONTEXT_SCROLL) return;
+  
   // Determine if the sample occured during vibration, and when it occured
   bool did_vibrate = data[0].did_vibrate;
 

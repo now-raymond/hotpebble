@@ -89,6 +89,7 @@ void send_change_context(uint8_t new_context) {
   
   // Prepare outbox buffer
   AppMessageResult result = app_message_outbox_begin(&out_iter);
+  
   if (result == APP_MSG_OK) {
     dict_write_int16(out_iter, COMMUNICATION_KEY_CHANGE_CONTEXT, new_context);
     
@@ -97,6 +98,28 @@ void send_change_context(uint8_t new_context) {
       APP_LOG(APP_LOG_LEVEL_ERROR, "Error sending the context change message: %d", (int)result);
     } else {
       APP_LOG(APP_LOG_LEVEL_INFO, "Context change message sent successfully.");
+    }
+  } else if (result == APP_MSG_BUSY) {
+    APP_LOG(APP_LOG_LEVEL_INFO, "Busy: Target is still processing the message.");
+  } else {
+    APP_LOG(APP_LOG_LEVEL_ERROR, "Error preparing the outbox: %d", (int)result);
+  }
+}
+
+void send_action_message(int action, int8_t parameter) {
+  APP_LOG(APP_LOG_LEVEL_INFO, "Attempting to send action message %d with param %d.", action, parameter);
+  DictionaryIterator *out_iter;
+  
+  // Prepare outbox buffer
+  AppMessageResult result = app_message_outbox_begin(&out_iter);
+  if (result == APP_MSG_OK) {
+    dict_write_int16(out_iter, action, parameter);
+    
+    result = app_message_outbox_send();
+    if (result != APP_MSG_OK) {
+      APP_LOG(APP_LOG_LEVEL_ERROR, "Error sending the action message: %d", (int)result);
+    } else {
+      APP_LOG(APP_LOG_LEVEL_INFO, "Action message sent successfully.");
     }
   } else if (result == APP_MSG_BUSY) {
     APP_LOG(APP_LOG_LEVEL_INFO, "Busy: Target is still processing the message.");

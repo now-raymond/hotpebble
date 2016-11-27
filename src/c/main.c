@@ -26,6 +26,14 @@ static void deinit(void) {
 // Context switching
 void switch_context(uint8_t new_context) {
   send_change_context(new_context);
+  switch (new_context) {
+    case CONTEXT_SCROLL:
+      window_update_status("SCROLL MODE");
+      break;
+    case CONTEXT_MEDIA:
+      window_update_status("MEDIA");
+      break;
+  }
 }
 void next_context() {
   uint8_t nextContext = g_currentContext + 1;
