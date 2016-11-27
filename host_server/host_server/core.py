@@ -3,10 +3,13 @@
 import sys
 import argparse
 import struct
-import ConfigParser
+import configparser
 import time
 import logging
 import uuid
+import os
+import threading
+
 from subprocess import call as subprocess_call
 
 from libpebble2.communication import PebbleConnection
@@ -19,9 +22,15 @@ from libpebble2.services.appmessage import *
 from libpebble2.protocol.apps import AppRunStateStart
 from libpebble2.protocol.apps import AppRunState
 import libpebble2.exceptions
+import win32api,win32con
 
+#global variables
 COMMUNICATION_KEY_CONFIG = 200
 COMMUNICATION_KEY_PING = 100
+speed_constant = 0.22
+direction = 1
+yValue = 0
+scroll_thread = None
 
 class PebbleConnectionException(Exception):
   pass
@@ -31,13 +40,25 @@ def get_button_ids():
         for press_type in ["SINGLE", "LONG", "MULTI"]:
             yield (press_key, press_type)
 
+
+def smooth_scroll_thread():
+    while (yValue):
+        if yValue > 0:
+            direction = 1
+        else:
+            direction = -1
+        win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, 0, 0, -1 * direction, 0)
+        absYValue = abs(yValue)
+        time.sleep(speed_constant/absYValue)
+
+
 def get_settings():
     parser = argparse.ArgumentParser(
         description='Pebble to linux keyboard bridge')
     parser.add_argument("config", help="Set the configuration file")
     settings = parser.parse_args()
 
-    conf = ConfigParser.ConfigParser()
+    conf = configparser.ConfigParser()
     conf.read(settings.config)
 
     settings.transport = conf.get('main', 'transport')
@@ -51,7 +72,7 @@ def get_settings():
 
         try:
             cmd = conf.get('commands', id_full)
-        except ConfigParser.NoOptionError:
+        except configparser.NoOptionError:
             continue
         settings.key_mappings[id_key[0] + "," + id_type[0]] = cmd
     print("Settings is good")
@@ -63,20 +84,28 @@ class CommandHandler:
         self.settings = settings
 
     def message_received_event(self, transaction_id, uuid, data):
+        global scroll_thread
+        global yValue
         print("Entering a message event...")
-        if uuid.get_hex() != self.settings.uuid:
-            print("input uuid and settings uuid don't match")
-            logging.debug(
-                "Ignoring appdata from unknown sender (%s)" %
-                data.uuid.get_hex())
-            return
+        # if uuid.get_hex() != self.settings.uuid:
+        #     print("input uuid and settings uuid don't match")
+        #     logging.debug(
+        #         "Ignoring appdata from unknown sender (%s)" %
+        #         data.uuid.get_hex())
+        #     return
         print("uuids MATCH")
         print(self)
         print(transaction_id)
         print(uuid)
         print(data)
         print(data.get(200))
-        test_volume_change(data.get(200))
+        yValue = data.get(200)
+
+        if scroll_thread is None or (not scroll_thread.is_alive() and yValue != 0):
+            scroll_thread = threading.Thread(target=smooth_scroll_thread)
+            scroll_thread.daemon = True
+            scroll_thread.start()
+
         # assert (1 in data), "Missing key on data structure"
         # assert (2 in data), "Missing key on data structure"
         #
@@ -90,12 +119,14 @@ class CommandHandler:
         # subprocess_call(to_emulate, shell=True)
 
 def test_volume_change(yValue):
-    if (yValue > 200):
+    if (yValue > 100):
         # up volume
-        pass
-    elif (yValue < -200):
+        os.system(r'C:\Users\lmy60\Desktop\scrolldown.ahk')
+        #subprocess.call(r'C:\Users\lmy60\Desktop\upVolume.ahk')
+    elif (yValue < -100):
         # down volume
-        pass
+        os.system(r'C:\Users\lmy60\Desktop\scrollup.ahk')
+        #subprocess.call(r'C:\Users\lmy60\Desktop\downVolume.ahk')
     else:
         # Do not do anything
         pass
@@ -113,12 +144,12 @@ class CommunicationKeeper:
         self.error = None
 
     def check_uuid(self, uuid):
-        if uuid != self.uuid:
-            print("unknown sender")
-            logging.debug(
-                "Ignoring appdata from unknown sender (%s)" %
-                data.uuid.get_hex())
-            return False
+    #     if uuid != self.uuid:
+    #         print("unknown sender")
+    #         logging.debug(
+    #             "Ignoring appdata from unknown sender (%s)" %
+    #             data.uuid.get_hex())
+    #         return False
         print("known sender")
         return True
 
