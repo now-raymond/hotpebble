@@ -89,7 +89,7 @@ static void accel_data_handler(AccelData *data, uint32_t num_samples) {
   // Determine if the sample occured during vibration, and when it occured
   bool did_vibrate = data[0].did_vibrate;
 
-  if(!did_vibrate) {
+  //if(!did_vibrate) {
     // Read sample 0's x, y, and z values
     uint64_t timestamp = data[0].timestamp;
     int16_t x = data[0].x;
@@ -115,10 +115,10 @@ static void accel_data_handler(AccelData *data, uint32_t num_samples) {
     // Send it to the application.
     //send_accelerometer_data(timestamp, x, y, z);
     
-  } else {
+  //} else {
     // Discard with a warning
-    APP_LOG(APP_LOG_LEVEL_WARNING, "Vibration occured during collection - discarding.");
-  }
+  //  APP_LOG(APP_LOG_LEVEL_WARNING, "Vibration occured during collection - discarding.");
+  //}
 }
 
 void init_accelerometer() {

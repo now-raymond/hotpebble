@@ -7,6 +7,7 @@ int16_t windowWidth;
 
 // BEGIN AUTO-GENERATED UI CODE; DO NOT MODIFY
 static Window *s_window;
+static GFont s_res_gothic_28_bold;
 static GFont s_res_gothic_18_bold;
 static TextLayer *s_textlayer_1;
 static TextLayer *model_x_txt;
@@ -22,11 +23,13 @@ static void initialise_ui(void) {
     window_set_fullscreen(s_window, true);
   #endif
   
+  s_res_gothic_28_bold = fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD);
   s_res_gothic_18_bold = fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD);
   // s_textlayer_1
-  s_textlayer_1 = text_layer_create(GRect(19, 16, 100, 20));
+  s_textlayer_1 = text_layer_create(GRect(19, 16, 100, 28));
   text_layer_set_text(s_textlayer_1, "HotPebble");
   text_layer_set_text_alignment(s_textlayer_1, GTextAlignmentCenter);
+  text_layer_set_font(s_textlayer_1, s_res_gothic_28_bold);
   layer_add_child(window_get_root_layer(s_window), (Layer *)s_textlayer_1);
   
   // model_x_txt
@@ -151,6 +154,10 @@ static void select_long_click_handler(ClickRecognizerRef recognizer, void *conte
 
 void up_multi_click_handler(ClickRecognizerRef recognizer, void *context) {
   switch (g_currentContext) {
+    case CONTEXT_SCROLL:
+      window_update_status("Scroll to top.");
+      send_action_message(COMMUNICATION_KEY_SCROLL_TO_TOP, 1);
+      break;
     case CONTEXT_MEDIA:
       window_update_status("Next track.");
       send_action_message(COMMUNICATION_KEY_TRACK_CHANGE, 1);

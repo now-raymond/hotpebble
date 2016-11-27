@@ -20,7 +20,7 @@ static void initialise_ui(void) {
   s_textlayer_1 = text_layer_create(GRect(24, 55, 100, 28));
   text_layer_set_background_color(s_textlayer_1, GColorClear);
   text_layer_set_text_color(s_textlayer_1, GColorWhite);
-  text_layer_set_text(s_textlayer_1, "SWAY");
+  text_layer_set_text(s_textlayer_1, "HOTPEBBLE");
   text_layer_set_text_alignment(s_textlayer_1, GTextAlignmentCenter);
   text_layer_set_font(s_textlayer_1, s_res_gothic_28_bold);
   layer_add_child(window_get_root_layer(s_window), (Layer *)s_textlayer_1);
@@ -372,10 +372,10 @@ void sway_accel_handler(AccelData *data, uint32_t num_samples) {
       
       if (same) {
         calibrating = false;
-        text_layer_set_text(s_textlayer_1, "Callibrated");
+        text_layer_set_text(s_textlayer_1, "Welcome");
 //         window_set_background_color(s_window, GColorBlack);
 //         text_layer_set_text_color(s_textlayer_1, GColorWhite);
-        APP_LOG(APP_LOG_LEVEL_INFO, "calibratied");    
+//        APP_LOG(APP_LOG_LEVEL_INFO, "calibratied");    
         fixed_avg = history_avg;
         calibrate_timer = app_timer_register(3000, (AppTimerCallback) calibrate_timer_callback, NULL); 
       }

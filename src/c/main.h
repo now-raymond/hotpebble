@@ -16,8 +16,8 @@ extern uint8_t g_currentContext;
 
 // Contexts
 #define NUM_CONTEXTS 3
-#define CONTEXT_SCROLL 1
-#define CONTEXT_MEDIA 2
+#define CONTEXT_MEDIA 1
+#define CONTEXT_SCROLL 2
 #define CONTEXT_PRESENTATION 3
 
 // Accelerometer.c
@@ -28,7 +28,12 @@ void init_accelerometer();
 #define COMMUNICATION_KEY_X 101
 #define COMMUNICATION_KEY_Y 102
 #define COMMUNICATION_KEY_Z 103
+
+// Scroll - 20X
 #define COMMUNICATION_KEY_TILTSPEED 200
+#define COMMUNICATION_KEY_SCROLL_TO_TOP 201
+
+// Contexts - 30X
 #define COMMUNICATION_KEY_CHANGE_CONTEXT 300
 
 // Media - 50X:

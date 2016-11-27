@@ -6,6 +6,8 @@ const uint32_t inbox_size = 256;
 const uint32_t outbox_size = 256;
 
 int8_t pending_context = -1;
+int16_t pending_action = -1;
+int16_t pending_parameter = -1;
 
 // Success callbacks
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
@@ -13,10 +15,14 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 }
 
 static void outbox_sent_callback(DictionaryIterator *iter, void *context) {
-  //APP_LOG(APP_LOG_LEVEL_INFO, "Message was successfully sent.");
+  //APP_LOG(APP_LOG_LEVEL_INFO, "Message was successfully sent. Pending action: %d", pending_action);
   if (pending_context > -1) {
     APP_LOG(APP_LOG_LEVEL_INFO, "There is a pending context change.");
     send_change_context(pending_context);
+  } 
+  if (pending_action > -1) {
+    APP_LOG(APP_LOG_LEVEL_INFO, "There is a pending action.");
+    send_action_message(pending_action, pending_parameter);
   }
 }
 
@@ -105,6 +111,8 @@ void send_change_context(int8_t new_context) {
     } else {
       APP_LOG(APP_LOG_LEVEL_INFO, "Context change message sent successfully.");
       pending_context = -1;
+      pending_action = -1;
+      pending_parameter = -1;
     }
   } else if (result == APP_MSG_BUSY) {
     APP_LOG(APP_LOG_LEVEL_INFO, "Busy: Target is still processing the message.");
@@ -128,9 +136,13 @@ void send_action_message(int action, int8_t parameter) {
       APP_LOG(APP_LOG_LEVEL_ERROR, "Error sending the action message: %d", (int)result);
     } else {
       APP_LOG(APP_LOG_LEVEL_INFO, "Action message sent successfully.");
+      pending_action = -1;
+      pending_parameter = -1;
     }
   } else if (result == APP_MSG_BUSY) {
     APP_LOG(APP_LOG_LEVEL_INFO, "Busy: Target is still processing the message.");
+    pending_action = action;
+    pending_parameter = parameter;
   } else {
     APP_LOG(APP_LOG_LEVEL_ERROR, "Error preparing the outbox: %d", (int)result);
   }
