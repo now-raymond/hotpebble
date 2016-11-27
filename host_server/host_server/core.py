@@ -10,7 +10,7 @@ import uuid
 import os
 import threading
 
-from subprocess import call as subprocess_call
+from subprocess import call
 
 from libpebble2.communication import PebbleConnection
 from libpebble2.communication.transports.websocket import WebsocketTransport
@@ -31,6 +31,10 @@ speed_constant = 0.22
 direction = 1
 yValue = 0
 scroll_thread = None
+# Context Keys
+context_media = 1
+context_scroll = 2
+context_presentation = 3
 
 class PebbleConnectionException(Exception):
   pass
@@ -84,8 +88,8 @@ class CommandHandler:
         self.settings = settings
 
     def message_received_event(self, transaction_id, uuid, data):
-        global scroll_thread
-        global yValue
+        global scroll_thread,yValue,contextKey,context_scroll,context_media,context_play_pause,context_track_change,context_volume
+        global context_presentation
         print("Entering a message event...")
         # if uuid.get_hex() != self.settings.uuid:
         #     print("input uuid and settings uuid don't match")
@@ -100,11 +104,98 @@ class CommandHandler:
         print(data)
         print(data.get(200))
         yValue = data.get(200)
+        contextKey = data.get(300)
+        context_play_pause = data.get(500)
+        context_volume = data.get(501)
+        context_track_change = data.get(502)
+        context_slide_change = data.get(600)
+        context_full_screen = data.get(601)
 
-        if scroll_thread is None or (not scroll_thread.is_alive() and yValue != 0):
-            scroll_thread = threading.Thread(target=smooth_scroll_thread)
-            scroll_thread.daemon = True
-            scroll_thread.start()
+        if contextKey is not None:
+            if contextKey == context_scroll:
+                if scroll_thread is None or (not scroll_thread.is_alive() and yValue != 0):
+                    scroll_thread = threading.Thread(target=smooth_scroll_thread)
+                    scroll_thread.daemon = True
+                    scroll_thread.start()
+                    # stop media, if any
+                    print("Currently in scroll context")
+            elif contextKey == context_media:
+                yValue = 0 # stop thread
+                # TODO: code for media buttons
+                # if(context_play_pause == 0 or context_play_pause == 1):
+                #     os.system(r'C:\Users\lmy60\Desktop\pauseMedia.ahk')
+
+                # elif(context_volume > 0):
+                #     os.system(r'C:\Users\lmy60\Desktop\upVolume.ahk')
+                # elif(context_volume < 0):
+                #     os.system(r'C:\Users\lmy60\Desktop\downVolume.ahk')
+                # elif(context_track_change > 0):
+                #     os.system(r'C:\Users\lmy60\Desktop\playNext.ahk')
+                # elif(context_track_change < 0):
+                #     os.system(r'C:\Users\lmy60\Desktop\playPrev.ahk')
+                # else:
+                #     pass
+                # contextKey = context_media
+                print("Entered media context")
+            elif contextKey == context_presentation:
+                print("Presentation context")
+            else:
+                pass
+
+        elif context_play_pause is not None:
+            print("play/pause!!!")
+            os.system('start ./host_server/ahk/pauseMedia.ahk')
+            # call(['start','hotpebble/host_server/host_server/ahk/downVolume.ahk'])
+        elif context_volume is not None:
+            print("In Volume Context!!!")
+            if(context_volume > 0):
+                print("Up Volume!!!")
+                os.system('start ./host_server/ahk/upVolume.ahk')
+            else:
+                print("Down Volume!!!")
+                os.system('start ./host_server/ahk/downVolume.ahk')
+        elif yValue is not None:
+            if scroll_thread is None or (not scroll_thread.is_alive() and yValue != 0):
+                scroll_thread = threading.Thread(target=smooth_scroll_thread)
+                scroll_thread.daemon = True
+                scroll_thread.start()
+                # stop media, if any
+                print("Currently in scroll context")
+        elif context_track_change is not None:
+            print("In Track Context")
+            if(context_track_change > 0):
+                print("Next Track")
+                os.system('start ./host_server/ahk/playNext.ahk')
+            else:
+                print("Previous Track")
+                os.system('start ./host_server/ahk/playPrev.ahk')
+        elif context_slide_change is not None:
+            print("Slide Change")
+            if(context_slide_change > 0):
+                print("Next Slide")
+                os.system('start ./host_server/ahk/moveRight.ahk')
+            else:
+                print("previous Slide")
+                os.system('start ./host_server/ahk/moveLeft.ahk')
+        elif context_full_screen is not None:
+            print("full screen context")
+            if(context_full_screen > 0):
+                print("fullscreen")
+                os.system('start ./host_server/ahk/fullScreen.ahk')
+            else:
+                print("exit full screen")
+                os.system('start ./host_server/ahk/exitfullScreen.ahk')
+
+        # if contextKey is not None:
+        #     if contextKey == context_media and scroll_thread.is_alive():
+        #         # stop thread
+        #         yValue = 0
+        #         # Do code for media buttons
+        #     else:
+        #         if scroll_thread is None or (not scroll_thread.is_alive() and yValue != 0):
+        #             scroll_thread = threading.Thread(target=smooth_scroll_thread)
+        #             scroll_thread.daemon = True
+        #             scroll_thread.start()
 
         # assert (1 in data), "Missing key on data structure"
         # assert (2 in data), "Missing key on data structure"
